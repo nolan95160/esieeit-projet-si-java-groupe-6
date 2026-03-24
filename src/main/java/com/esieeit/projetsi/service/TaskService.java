@@ -2,12 +2,14 @@ package com.esieeit.projetsi.service;
 
 import com.esieeit.projetsi.api.dto.TaskCreateRequest;
 import com.esieeit.projetsi.api.dto.TaskUpdateRequest;
+import com.esieeit.projetsi.domain.entity.Project;
+import com.esieeit.projetsi.domain.entity.Task;
 import com.esieeit.projetsi.domain.enums.TaskStatus;
 import com.esieeit.projetsi.domain.exception.BusinessRuleException;
 import com.esieeit.projetsi.domain.exception.InvalidDataException;
 import com.esieeit.projetsi.domain.exception.ResourceNotFoundException;
-import com.esieeit.projetsi.domain.model.Task;
-import com.esieeit.projetsi.repository.InMemoryTaskRepository;
+import com.esieeit.projetsi.repository.ProjectRepository;
+import com.esieeit.projetsi.repository.TaskRepository;
 
 import org.springframework.stereotype.Service;
 
@@ -16,15 +18,27 @@ import java.util.List;
 @Service
 public class TaskService {
 
-    private final InMemoryTaskRepository taskRepository;
+    private final TaskRepository taskRepository;
+    private final ProjectRepository projectRepository;
 
-    public TaskService(InMemoryTaskRepository taskRepository) {
+    public TaskService(TaskRepository taskRepository, ProjectRepository projectRepository) {
         this.taskRepository = taskRepository;
+        this.projectRepository = projectRepository;
     }
 
     public Task create(TaskCreateRequest req) {
-        Long id = taskRepository.nextId();
-        Task task = new Task(id, 1L, req.getTitle(), req.getDescription(), 1L);
+        Project project = projectRepository.findById(req.getProjectId())
+                .orElseThrow(() -> new ResourceNotFoundException("Project introuvable: id=" + req.getProjectId()));
+
+        if (taskRepository.existsByProjectIdAndTitleIgnoreCase(project.getId(), req.getTitle())) {
+            throw new BusinessRuleException("Une tâche avec le même titre existe déjà dans ce projet");
+        }
+
+        Task task = new Task();
+        task.setTitle(req.getTitle());
+        task.setDescription(req.getDescription());
+        task.setProject(project);
+
         return taskRepository.save(task);
     }
 
@@ -41,11 +55,11 @@ public class TaskService {
         Task task = findById(id);
 
         if (req.getTitle() != null) {
-            task.rename(req.getTitle());
+            task.setTitle(req.getTitle());
         }
 
         if (req.getDescription() != null) {
-            task.changeDescription(req.getDescription());
+            task.setDescription(req.getDescription());
         }
 
         if (req.getStatus() != null) {
@@ -73,10 +87,11 @@ public class TaskService {
             return;
         }
         switch (newStatus) {
-            case IN_PROGRESS -> task.start();
-            case DONE -> task.complete();
+            case IN_PROGRESS -> task.markInProgress();
+            case DONE -> task.markDone();
             case TODO -> throw new BusinessRuleException(
                     "Transition de statut interdite: " + task.getStatus() + " -> TODO");
+            default -> task.setStatus(newStatus);
         }
     }
 }

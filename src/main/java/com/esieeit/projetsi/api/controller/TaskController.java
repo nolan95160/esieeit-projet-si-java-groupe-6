@@ -4,7 +4,7 @@ import com.esieeit.projetsi.api.dto.TaskCreateRequest;
 import com.esieeit.projetsi.api.dto.TaskMapper;
 import com.esieeit.projetsi.api.dto.TaskResponse;
 import com.esieeit.projetsi.api.dto.TaskUpdateRequest;
-import com.esieeit.projetsi.domain.model.Task;
+import com.esieeit.projetsi.domain.entity.Task;
 import com.esieeit.projetsi.service.TaskService;
 
 import jakarta.validation.Valid;

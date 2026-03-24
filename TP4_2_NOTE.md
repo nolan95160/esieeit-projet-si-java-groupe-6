@@ -1,6 +1,6 @@
 # TP 4.2 – Rapport de synthèse
 
-**Date :** 2026-02-26  
+**Date :** 2026-03-24  
 **Module :** Projet SI – ESIEE-IT  
 **Séance :** 4 – Spring Data JPA, Repositories, Données de test
 
@@ -8,11 +8,12 @@
 
 ## 1. Repositories créés
 
-Trois interfaces Spring Data JPA ont été créées dans `infrastructure/repository/` :
+Quatre interfaces Spring Data JPA ont été créées dans `repository/` :
 
-- **`TaskJpaRepository`** – accès aux tâches avec filtres par statut, projet, titre.
-- **`ProjectJpaRepository`** – accès aux projets avec filtres par nom, propriétaire, statut.
-- **`UserJpaRepository`** – accès aux utilisateurs avec recherche par email/username (préparation JWT).
+- **`TaskRepository`** – accès aux tâches avec filtres par statut, projet, titre.
+- **`ProjectRepository`** – accès aux projets avec filtres par nom, propriétaire, statut.
+- **`UserRepository`** – accès aux utilisateurs avec recherche par email/username (préparation JWT).
+- **`CommentRepository`** – accès aux commentaires par tâche ou auteur.
 
 ## 2. Query methods ajoutées et pourquoi
 
@@ -33,22 +34,22 @@ Trois interfaces Spring Data JPA ont été créées dans `infrastructure/reposit
 
 `TaskService` a été entièrement migré :
 - **Suppression** du `InMemoryTaskRepository` (mocks en mémoire).
-- **Injection** de `TaskJpaRepository` et `ProjectJpaRepository`.
+- **Injection** de `TaskRepository` et `ProjectRepository` (Spring Data JPA).
 - Création d'une tâche requiert désormais un `projectId` valide → le service vérifie l'existence du projet.
 - Le contrôle de doublons (`existsByProjectIdAndTitleIgnoreCase`) est appliqué à la création.
-- Les annotations `@Transactional` / `@Transactional(readOnly = true)` gèrent le contexte JPA.
+- `TaskMapper` et `TaskResponse` mis à jour pour utiliser `domain.entity.Task` (LocalDateTime au lieu d'Instant).
 
 ## 4. Stratégie de seed
 
-**`CommandLineRunner` via `DataInitializer`** (`@Profile("dev")`) :
+**`CommandLineRunner` via `DataInitializer`** (`config/DataInitializer.java`) :
 - Avantage : logique Java, conditions de seed, relations complexes faciles à exprimer.
-- **Idempotent** : le seed ne s'exécute que si les trois tables sont vides (`count() == 0`).
-- Lancer avec : `./gradlew bootRun --args='--spring.profiles.active=dev'`
+- **Idempotent** : le seed ne s'exécute que si `userRepository.count() == 0`.
+- S'exécute automatiquement au démarrage de l'application.
 
 Jeu de données :
-- 4 utilisateurs (admin, alice, bob, carol)
+- 4 utilisateurs (admin, alice, bob, charlie)
 - 3 projets (statuts ACTIVE / DRAFT)
-- 12 tâches réparties sur les 3 projets (statuts et priorités variés)
+- 12 tâches réparties sur les 3 projets (statuts TODO/IN_PROGRESS/DONE, priorités LOW/MEDIUM/HIGH/URGENT)
 
 ## 5. Problèmes rencontrés
 
@@ -59,7 +60,7 @@ Jeu de données :
 ## 6. Ce qui reste à améliorer avant la Séance 5 (JWT)
 
 - Ajouter `UserService` avec création d'utilisateur (hashage du mot de passe avec BCrypt).
-- Utiliser `UserJpaRepository.findByEmail()` dans le `UserDetailsService` de Spring Security.
+- Utiliser `UserRepository.findByEmail()` dans le `UserDetailsService` de Spring Security.
 - Introduire `ProjectController` et `ProjectService` complets.
 - Envisager des DTOs séparés pour l'input/output des projets et des utilisateurs.
 - Migrer vers Flyway pour versionner le schéma DB (`V1__init.sql`).
