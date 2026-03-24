@@ -33,3 +33,7 @@ testing {
         }
     }
 }
+
+tasks.withType(org.springframework.boot.gradle.tasks.run.BootRun) {
+    mainClass.set('com.esieeit.projetsi.App')
+}
