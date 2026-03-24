@@ -12,8 +12,8 @@ public class TaskUpdateRequest {
     private String description;
 
     @Pattern(
-        regexp = "TODO|IN_PROGRESS|DONE",
-        message = "status doit être parmi TODO, IN_PROGRESS, DONE"
+        regexp = "TODO|IN_PROGRESS|DONE|ARCHIVED",
+        message = "status doit être parmi TODO, IN_PROGRESS, DONE, ARCHIVED"
     )
     private String status;
 
